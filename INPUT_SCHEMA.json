@@ -4,21 +4,32 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "profileUrls": {
+    "start_urls": {
       "title": "LinkedIn Profile URLs",
       "type": "array",
       "description": "List of LinkedIn profile URLs to analyze and score",
       "prefill": [
-        "https://www.linkedin.com/in/example-profile-1/",
-        "https://www.linkedin.com/in/example-profile-2/"
+        {
+          "url": "https://www.linkedin.com/in/example-profile-1/"
+        },
+        {
+          "url": "https://www.linkedin.com/in/example-profile-2/"
+        }
       ],
       "items": {
-        "type": "string",
-        "pattern": "^https://(?:www\\.)?linkedin\\.com/in/[a-zA-Z0-9\\-]+/?$"
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "pattern": "^https://(?:www\\.)?linkedin\\.com/in/[a-zA-Z0-9\\-]+/?$",
+            "title": "LinkedIn Profile URL"
+          }
+        },
+        "required": ["url"]
       },
       "minItems": 1,
       "maxItems": 1000,
-      "editor": "stringList"
+      "editor": "requestListSources"
     },
     "qualificationCriteria": {
       "title": "Lead Qualification Criteria",
@@ -208,5 +219,5 @@
       }
     }
   },
-  "required": ["profileUrls"]
+  "required": ["start_urls"]
 }

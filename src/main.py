@@ -29,10 +29,28 @@ async def main() -> None:
         # Get and validate input
         actor_input = await Actor.get_input() or {}
         
-        # Validate required input
-        profile_urls = actor_input.get('profileUrls', [])
+        # Debug: Log the received input
+        Actor.log.info(f'Received input: {actor_input}')
+        
+        # Validate required input - prioritize start_urls format
+        profile_urls = actor_input.get('start_urls', [])
+        
+        # If start_urls format, extract URLs from objects
+        if isinstance(profile_urls, list) and profile_urls and isinstance(profile_urls[0], dict):
+            profile_urls = [item.get('url', '') for item in profile_urls if item.get('url')]
+        
+        # Fallback to alternative input formats
+        if not profile_urls:
+            profile_urls = (
+                actor_input.get('profileUrls', []) or
+                actor_input.get('profile_urls', []) or
+                actor_input.get('urls', []) or
+                []
+            )
+        
         if not profile_urls:
             Actor.log.error('No LinkedIn profile URLs provided in input')
+            Actor.log.error('Expected input format: {"start_urls": [{"url": "https://www.linkedin.com/in/profile/"}]}')
             await Actor.exit(exit_code=1)
         
         Actor.log.info(f'Starting LinkedIn Lead Qualifier with {len(profile_urls)} profiles')
