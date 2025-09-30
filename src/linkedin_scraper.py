@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 from apify import Actor
 from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
-from crawlee.http_clients import HttpxHttpClient
 from crawlee.models import Request
 from playwright.async_api import Page, TimeoutError as PlaywrightTimeoutError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
