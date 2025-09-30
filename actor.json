@@ -1,0 +1,90 @@
+{
+  "actorSpecification": 1,
+  "name": "linkedin-lead-qualifier-scoring-tool",
+  "title": "LinkedIn Lead Qualifier & Scoring Tool",
+  "description": "Intelligent LinkedIn lead qualification tool that scrapes profiles, scores them against your criteria, and returns only qualified prospects. Perfect for sales teams, recruiters, and marketers targeting specific audiences.",
+  "version": "1.0.0",
+  "meta": {
+    "templateId": "python-crawlee-playwright"
+  },
+  "input": "./INPUT_SCHEMA.json",
+  "dockerfile": "./Dockerfile",
+  "readme": "./README.md",
+  "categories": [
+    "BUSINESS_DATA",
+    "LEAD_GENERATION"
+  ],
+  "tags": [
+    "linkedin-scraper",
+    "lead-generation",
+    "sales-intelligence",
+    "prospect-qualification",
+    "linkedin-leads",
+    "business-data",
+    "sales-automation",
+    "recruiting-tool",
+    "lead-scoring",
+    "social-media-scraping"
+  ],
+  "pricing": {
+    "type": "PER_RESULT",
+    "pricePerResult": 0.02,
+    "currency": "USD",
+    "description": "Pay $0.02 per qualified lead returned. Free tier includes 10 qualified leads per month."
+  },
+  "freeTier": {
+    "maxResults": 10,
+    "resetPeriod": "MONTHLY"
+  },
+  "seoTitle": "LinkedIn Lead Qualifier - Automated Prospect Scoring & Lead Generation Tool",
+  "seoDescription": "Automate LinkedIn lead qualification with AI-powered scoring. Extract, score, and filter LinkedIn profiles based on job title, industry, location, experience, and skills. Perfect for sales teams and recruiters.",
+  "author": {
+    "name": "LinkedIn Lead Qualifier Team",
+    "email": "support@linkedin-lead-qualifier.com"
+  },
+  "website": "https://apify.com/store/linkedin-lead-qualifier-scoring-tool",
+  "supportUrl": "https://github.com/linkedin-lead-qualifier/support",
+  "changelogUrl": "https://github.com/linkedin-lead-qualifier/changelog",
+  "isPublic": true,
+  "isDeprecated": false,
+  "stats": {
+    "totalRuns": 0,
+    "totalUsers": 0,
+    "totalResults": 0
+  },
+  "example": {
+    "profileUrls": [
+      "https://www.linkedin.com/in/example-ceo/",
+      "https://www.linkedin.com/in/example-cto/",
+      "https://www.linkedin.com/in/example-manager/"
+    ],
+    "qualificationCriteria": {
+      "targetJobTitles": ["CEO", "CTO", "VP", "Director", "Manager"],
+      "targetIndustries": ["Technology", "Software", "SaaS"],
+      "targetLocations": ["San Francisco", "New York", "Remote"],
+      "minExperienceYears": 5,
+      "targetCompanySizes": ["51-200", "201-500", "501-1000"],
+      "requiredSkills": ["Leadership", "Strategy", "Technology"]
+    },
+    "scoringWeights": {
+      "jobTitleWeight": 0.3,
+      "industryWeight": 0.25,
+      "locationWeight": 0.15,
+      "experienceWeight": 0.2,
+      "companySizeWeight": 0.05,
+      "skillsWeight": 0.05
+    },
+    "filteringOptions": {
+      "minQualificationScore": 70,
+      "maxResults": 50,
+      "includeScoreBreakdown": true
+    },
+    "processingOptions": {
+      "maxConcurrency": 3,
+      "requestDelay": 3.0,
+      "retryAttempts": 2,
+      "headless": true
+    }
+  },
+  "storeFrontUrl": "https://apify.com/store/linkedin-lead-qualifier-scoring-tool"
+}

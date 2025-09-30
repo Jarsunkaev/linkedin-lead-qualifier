@@ -1,0 +1,212 @@
+{
+  "title": "LinkedIn Lead Qualifier Input",
+  "description": "Configure your lead qualification criteria and profile URLs to score and filter LinkedIn prospects",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "profileUrls": {
+      "title": "LinkedIn Profile URLs",
+      "type": "array",
+      "description": "List of LinkedIn profile URLs to analyze and score",
+      "prefill": [
+        "https://www.linkedin.com/in/example-profile-1/",
+        "https://www.linkedin.com/in/example-profile-2/"
+      ],
+      "items": {
+        "type": "string",
+        "pattern": "^https://(?:www\\.)?linkedin\\.com/in/[a-zA-Z0-9\\-]+/?$"
+      },
+      "minItems": 1,
+      "maxItems": 1000,
+      "editor": "stringList"
+    },
+    "qualificationCriteria": {
+      "title": "Lead Qualification Criteria",
+      "type": "object",
+      "description": "Define the criteria for scoring and qualifying leads",
+      "properties": {
+        "targetJobTitles": {
+          "title": "Target Job Titles",
+          "type": "array",
+          "description": "Job titles or keywords to match (e.g., 'CEO', 'Marketing Manager', 'Developer')",
+          "prefill": ["CEO", "CTO", "VP", "Director", "Manager"],
+          "items": {
+            "type": "string"
+          },
+          "editor": "stringList"
+        },
+        "targetIndustries": {
+          "title": "Target Industries",
+          "type": "array",
+          "description": "Industries to prioritize (e.g., 'Technology', 'Healthcare', 'Finance')",
+          "prefill": ["Technology", "Software", "SaaS"],
+          "items": {
+            "type": "string"
+          },
+          "editor": "stringList"
+        },
+        "targetLocations": {
+          "title": "Target Locations",
+          "type": "array",
+          "description": "Preferred locations or regions (e.g., 'San Francisco', 'New York', 'Remote')",
+          "prefill": ["San Francisco", "New York", "London"],
+          "items": {
+            "type": "string"
+          },
+          "editor": "stringList"
+        },
+        "minExperienceYears": {
+          "title": "Minimum Experience (Years)",
+          "type": "integer",
+          "description": "Minimum years of professional experience required",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 50
+        },
+        "targetCompanySizes": {
+          "title": "Target Company Sizes",
+          "type": "array",
+          "description": "Preferred company sizes",
+          "prefill": ["51-200", "201-500", "501-1000"],
+          "items": {
+            "type": "string",
+            "enum": ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5001-10000", "10000+"]
+          },
+          "editor": "select"
+        },
+        "requiredSkills": {
+          "title": "Required Skills",
+          "type": "array",
+          "description": "Skills or technologies that boost qualification score",
+          "prefill": ["Python", "JavaScript", "Marketing", "Sales"],
+          "items": {
+            "type": "string"
+          },
+          "editor": "stringList"
+        }
+      }
+    },
+    "scoringWeights": {
+      "title": "Scoring Weights",
+      "type": "object",
+      "description": "Adjust how much each criterion impacts the final score (must sum to 1.0)",
+      "properties": {
+        "jobTitleWeight": {
+          "title": "Job Title Weight",
+          "type": "number",
+          "description": "Weight for job title matching (0.0 - 1.0)",
+          "default": 0.25,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "industryWeight": {
+          "title": "Industry Weight",
+          "type": "number",
+          "description": "Weight for industry matching (0.0 - 1.0)",
+          "default": 0.20,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "locationWeight": {
+          "title": "Location Weight",
+          "type": "number",
+          "description": "Weight for location matching (0.0 - 1.0)",
+          "default": 0.15,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "experienceWeight": {
+          "title": "Experience Weight",
+          "type": "number",
+          "description": "Weight for experience level (0.0 - 1.0)",
+          "default": 0.20,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "companySizeWeight": {
+          "title": "Company Size Weight",
+          "type": "number",
+          "description": "Weight for company size matching (0.0 - 1.0)",
+          "default": 0.10,
+          "minimum": 0,
+          "maximum": 1
+        },
+        "skillsWeight": {
+          "title": "Skills Weight",
+          "type": "number",
+          "description": "Weight for skills matching (0.0 - 1.0)",
+          "default": 0.10,
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "filteringOptions": {
+      "title": "Filtering Options",
+      "type": "object",
+      "description": "Configure output filtering and processing options",
+      "properties": {
+        "minQualificationScore": {
+          "title": "Minimum Qualification Score",
+          "type": "number",
+          "description": "Only return leads with scores above this threshold (0-100)",
+          "default": 60,
+          "minimum": 0,
+          "maximum": 100
+        },
+        "maxResults": {
+          "title": "Maximum Results",
+          "type": "integer",
+          "description": "Maximum number of qualified leads to return",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "includeScoreBreakdown": {
+          "title": "Include Score Breakdown",
+          "type": "boolean",
+          "description": "Include detailed scoring breakdown for each lead",
+          "default": true
+        }
+      }
+    },
+    "processingOptions": {
+      "title": "Processing Options",
+      "type": "object",
+      "description": "Configure scraping and processing behavior",
+      "properties": {
+        "maxConcurrency": {
+          "title": "Max Concurrency",
+          "type": "integer",
+          "description": "Maximum number of profiles to process simultaneously",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 20
+        },
+        "requestDelay": {
+          "title": "Request Delay (seconds)",
+          "type": "number",
+          "description": "Delay between requests to avoid rate limiting",
+          "default": 2,
+          "minimum": 0.5,
+          "maximum": 10
+        },
+        "retryAttempts": {
+          "title": "Retry Attempts",
+          "type": "integer",
+          "description": "Number of retry attempts for failed requests",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10
+        },
+        "headless": {
+          "title": "Headless Mode",
+          "type": "boolean",
+          "description": "Run browser in headless mode (recommended for production)",
+          "default": true
+        }
+      }
+    }
+  },
+  "required": ["profileUrls"]
+}

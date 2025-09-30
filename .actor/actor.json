@@ -1,0 +1,13 @@
+{
+    "actorSpecification": 1,
+    "name": "linkedin-lead-qualifier-scoring-tool",
+    "title": "Getting started with Python Crawlee and Playwright",
+    "description": "Scrapes titles of websites using Crawlee and Playwright.",
+    "version": "0.0",
+    "buildTag": "latest",
+    "meta": {
+        "templateId": "python-crawlee-playwright"
+    },
+    "input": "./input_schema.json",
+    "dockerfile": "../Dockerfile"
+}
