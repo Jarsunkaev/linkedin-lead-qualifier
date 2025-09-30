@@ -169,19 +169,28 @@ async def main() -> None:
             # Store qualified leads in dataset
             dataset_items = []
             for lead in qualified_leads:
-                lead_data = lead.to_dict()
-                
-                # Optionally exclude detailed breakdown to reduce output size
-                if not include_breakdown:
-                    # Keep only essential scoring info
-                    essential_keys = [
-                        'url', 'name', 'headline', 'current_position', 'current_company',
-                        'location', 'industry', 'experience_years', 'skills', 'total_score',
-                        'qualification_reasons', 'scraped_at', 'qualified_at'
-                    ]
-                    lead_data = {k: v for k, v in lead_data.items() if k in essential_keys}
-                
-                dataset_items.append(lead_data)
+                try:
+                    lead_data = lead.to_dict()
+                    
+                    # Optionally exclude detailed breakdown to reduce output size
+                    if not include_breakdown:
+                        # Keep only essential scoring info
+                        essential_keys = [
+                            'url', 'name', 'headline', 'current_position', 'current_company',
+                            'location', 'industry', 'experience_years', 'skills', 'total_score',
+                            'qualification_reasons', 'scraped_at', 'qualified_at'
+                        ]
+                        lead_data = {k: v for k, v in lead_data.items() if k in essential_keys}
+                    
+                    dataset_items.append(lead_data)
+                except Exception as e:
+                    Actor.log.error(f"Error serializing lead data: {str(e)}")
+                    # Add minimal data for failed serialization
+                    dataset_items.append({
+                        'url': lead.profile.url,
+                        'error': f"Serialization failed: {str(e)}",
+                        'total_score': lead.total_score
+                    })
             
             # Push all results to dataset
             if dataset_items:

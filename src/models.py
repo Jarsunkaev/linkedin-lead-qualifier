@@ -56,7 +56,7 @@ class LinkedInProfile:
     education: List[str] = field(default_factory=list)
     connections: Optional[str] = None
     about: Optional[str] = None
-    scraped_at: datetime = field(default_factory=datetime.now)
+    scraped_at: Optional[datetime] = field(default_factory=datetime.now)
     
     # Error tracking
     extraction_errors: List[str] = field(default_factory=list)
@@ -95,7 +95,7 @@ class QualifiedLead:
     
     profile: LinkedInProfile
     score_breakdown: ScoreBreakdown
-    qualified_at: datetime = field(default_factory=datetime.now)
+    qualified_at: Optional[datetime] = field(default_factory=datetime.now)
     
     @property
     def total_score(self) -> float:
@@ -137,8 +137,8 @@ class QualifiedLead:
             'qualification_reasons': self.score_breakdown.qualification_reasons,
             
             # Metadata
-            'scraped_at': self.profile.scraped_at.isoformat(),
-            'qualified_at': self.qualified_at.isoformat(),
+            'scraped_at': self.profile.scraped_at.isoformat() if self.profile.scraped_at else None,
+            'qualified_at': self.qualified_at.isoformat() if self.qualified_at else None,
             'extraction_errors': self.profile.extraction_errors,
         }
 

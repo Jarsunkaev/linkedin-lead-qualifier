@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from datetime import timedelta
 from typing import List, Optional
 from urllib.parse import urlparse
 
@@ -30,6 +31,7 @@ class LinkedInScraper:
         self.retry_attempts = retry_attempts
         self.headless = headless
         self.crawler: Optional[PlaywrightCrawler] = None
+        self.results: List[LinkedInProfile] = []
         
     async def initialize(self) -> None:
         """Initialize the crawler with proper configuration."""
@@ -46,7 +48,7 @@ class LinkedInScraper:
                     '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 ],
             },
-            request_handler_timeout=60,
+            request_handler_timeout=timedelta(seconds=60),
         )
         
         @self.crawler.router.default_handler
@@ -54,16 +56,16 @@ class LinkedInScraper:
             """Handle LinkedIn profile scraping."""
             try:
                 profile = await self._extract_profile_data(context.page, context.request.url)
-                await context.push_data(profile)
+                self.results.append(profile)
             except Exception as e:
                 Actor.log.error(f"Error processing {context.request.url}: {str(e)}")
-                # Push error data for tracking
+                # Add error profile to results
                 error_profile = LinkedInProfile(
                     url=context.request.url,
                     is_valid=False,
                     extraction_errors=[str(e)]
                 )
-                await context.push_data(error_profile)
+                self.results.append(error_profile)
     
     def validate_linkedin_url(self, url: str) -> bool:
         """Validate if URL is a proper LinkedIn profile URL."""
@@ -103,23 +105,14 @@ class LinkedInScraper:
                 'userData': {'delay': i * self.request_delay}
             })
         
+        # Store results in a list instead of dataset to avoid conflicts
+        self.results = []
+        
         # Run crawler
         await self.crawler.run(start_requests)
         
-        # Get results from dataset
-        dataset = await Actor.open_dataset()
-        results = []
-        
-        async for item in dataset.iterate_items():
-            if isinstance(item, dict):
-                # Convert dict back to LinkedInProfile
-                profile = LinkedInProfile(**item)
-                results.append(profile)
-            else:
-                results.append(item)
-        
-        Actor.log.info(f"Successfully scraped {len([r for r in results if r.is_valid])} profiles")
-        return results
+        Actor.log.info(f"Successfully scraped {len([r for r in self.results if r.is_valid])} profiles")
+        return self.results
     
     @retry(
         stop=stop_after_attempt(3),
@@ -131,11 +124,19 @@ class LinkedInScraper:
         profile = LinkedInProfile(url=url)
         
         try:
-            # Wait for page to load
-            await page.goto(url, wait_until='networkidle', timeout=30000)
+            # Navigate to page with proper headers
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            
+            # Check if we're blocked or redirected
+            current_url = page.url
+            if 'linkedin.com/authwall' in current_url or 'linkedin.com/checkpoint' in current_url:
+                raise Exception("LinkedIn access blocked - authentication required")
+            
+            # Wait for content to load
+            await page.wait_for_load_state('networkidle', timeout=15000)
             
             # Add random delay to mimic human behavior
-            await asyncio.sleep(1 + (hash(url) % 3))
+            await asyncio.sleep(2 + (hash(url) % 3))
             
             # Extract name
             try:
