@@ -39,7 +39,7 @@ class LinkedInScraper:
         # Multi-layered extraction strategies
         self.extraction_strategies = {
             'json_ld': self._extract_from_json_ld,
-            'css_selectors': self._extract_from_css,
+            'css_selectors': self._extract_with_css_selectors,
             'content_based': self._extract_from_content
         }
         
