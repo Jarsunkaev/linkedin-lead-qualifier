@@ -12,8 +12,6 @@ from urllib.parse import urlparse
 
 from apify import Actor
 from crawlee.crawlers import PlaywrightCrawler, PlaywrightCrawlingContext
-from crawlee.http_clients import HttpxHttpClient
-from crawlee import Request
 from playwright.async_api import Page, TimeoutError as PlaywrightTimeoutError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
@@ -149,14 +147,8 @@ class LinkedInScraper:
         
         Actor.log.info(f"Starting to scrape {len(valid_urls)} LinkedIn profiles")
         
-        # Create Request objects for crawler
-        start_requests = []
-        for i, url in enumerate(valid_urls):
-            request = Request.from_url(
-                url=url,
-                user_data={'delay': i * self.request_delay}
-            )
-            start_requests.append(request)
+        # Use simple URLs for crawler (crawlee will handle Request creation)
+        start_requests = valid_urls
         
         # Store results in a list instead of dataset to avoid conflicts
         self.results = []
