@@ -104,6 +104,7 @@ async def main() -> None:
         
         # Parse processing options
         processing_input = actor_input.get('processingOptions', {})
+        linkedin_cookie = processing_input.get('linkedinCookie')
         max_concurrency = processing_input.get('maxConcurrency', 5)
         request_delay = processing_input.get('requestDelay', 2.0)
         retry_attempts = processing_input.get('retryAttempts', 3)
@@ -122,6 +123,7 @@ async def main() -> None:
             request_delay=request_delay,
             retry_attempts=retry_attempts,
             headless=headless,
+            linkedin_cookie=linkedin_cookie,
         )
         
         scoring_engine = LeadScoringEngine(criteria, weights)

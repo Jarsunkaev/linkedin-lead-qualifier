@@ -186,6 +186,13 @@
       "type": "object",
       "description": "Configure scraping and processing behavior",
       "properties": {
+        "linkedinCookie": {
+          "title": "LinkedIn Authentication Cookie (li_at)",
+          "type": "string",
+          "description": "LinkedIn li_at cookie value for authenticated access (optional but recommended for better data access)",
+          "editor": "textfield",
+          "isSecret": true
+        },
         "maxConcurrency": {
           "title": "Max Concurrency",
           "type": "integer",

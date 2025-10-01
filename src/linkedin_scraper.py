@@ -27,11 +27,13 @@ class LinkedInScraper:
         request_delay: float = 3.0,  # Increased from 2.0 based on research
         retry_attempts: int = 3,
         headless: bool = True,
+        linkedin_cookie: Optional[str] = None,
     ):
         self.max_concurrency = max_concurrency
         self.request_delay = request_delay
         self.retry_attempts = retry_attempts
         self.headless = headless
+        self.linkedin_cookie = linkedin_cookie or 'AQEDAUBl5DYEK-2pAAABmaFpohEAAAGZxXYmEU0AZzAJ5YtjBl1iIkVDitCxnG-F-djtN88Uit__qdxwtVbRXYY2CtGZSiyqOwPSZG0Hg697vb14cpPwmFTIFKFg6xkRQ9GXr86n4a-05Uie07LHsMZq'
         self.crawler: Optional[PlaywrightCrawler] = None
         self.results: List[LinkedInProfile] = []
         self.last_request_time = 0
@@ -399,6 +401,20 @@ class LinkedInScraper:
             # Respect rate limiting
             await self._respect_rate_limit()
             
+            # Set LinkedIn authentication cookie
+            if self.linkedin_cookie:
+                Actor.log.info("Setting LinkedIn authentication cookie")
+                await page.context.add_cookies([{
+                    'name': 'li_at',
+                    'value': self.linkedin_cookie,
+                    'domain': '.linkedin.com',
+                    'path': '/',
+                    'httpOnly': True,
+                    'secure': True
+                }])
+            else:
+                Actor.log.warning("No LinkedIn cookie provided - may encounter access restrictions")
+            
             # Set additional headers to avoid detection
             await page.set_extra_http_headers({
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -411,48 +427,9 @@ class LinkedInScraper:
                 'Sec-Fetch-Site': 'none',
             })
             
-            # Try alternative access methods for LinkedIn
-            success = False
-            
-            # Method 1: Direct access with referer
-            try:
-                await page.set_extra_http_headers({
-                    'Referer': 'https://www.google.com/',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Language': 'en-US,en;q=0.5',
-                })
-                await page.goto(url, wait_until='domcontentloaded', timeout=30000)
-                
-                # Check if we got the actual profile
-                page_title = await page.title()
-                if 'join linkedin' not in page_title.lower() and 'sign in' not in page_title.lower():
-                    success = True
-                    Actor.log.info("Direct access successful")
-                else:
-                    Actor.log.warning("Direct access failed - trying alternative methods")
-            except Exception as e:
-                Actor.log.warning(f"Direct access failed: {str(e)}")
-            
-            # Method 2: Try public profile URL format
-            if not success:
-                try:
-                    # Convert /in/ URL to public profile format
-                    if '/in/' in url:
-                        public_url = url.replace('/in/', '/pub/').rstrip('/') + '/en'
-                        Actor.log.info(f"Trying public profile URL: {public_url}")
-                        await page.goto(public_url, wait_until='domcontentloaded', timeout=30000)
-                        
-                        page_title = await page.title()
-                        if 'join linkedin' not in page_title.lower():
-                            success = True
-                            Actor.log.info("Public profile access successful")
-                except Exception as e:
-                    Actor.log.warning(f"Public profile access failed: {str(e)}")
-            
-            # Method 3: Fallback to original URL
-            if not success:
-                Actor.log.info("Using original URL as fallback")
-                await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            # Navigate directly with authentication cookie
+            Actor.log.info(f"Accessing LinkedIn profile with authentication: {url}")
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
             
             # Check for LinkedIn blocks/redirects
             current_url = page.url
