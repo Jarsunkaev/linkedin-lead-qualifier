@@ -33,7 +33,7 @@ class LinkedInScraper:
         self.request_delay = request_delay
         self.retry_attempts = retry_attempts
         self.headless = headless
-        self.linkedin_cookie = linkedin_cookie or 'AQEDAUBl5DYEK-2pAAABmaFpohEAAAGZxXYmEU0AZzAJ5YtjBl1iIkVDitCxnG-F-djtN88Uit__qdxwtVbRXYY2CtGZSiyqOwPSZG0Hg697vb14cpPwmFTIFKFg6xkRQ9GXr86n4a-05Uie07LHsMZq'
+        self.linkedin_cookie = linkedin_cookie or 'AQEDAUBl5DYCjBuBAAABmaGHQ0EAAAGZxZPHQU0AMBQBmY0LyUZ8P4WojDWlJ-FY6pvBs5SzR5fW8ZRkKHFA1j6X7ZXzlD_rDzsJjPZlGM8JkdzBl0gPAkwipx2n5oY8W27A_ZKfWxb3p4Ahh62J6GvS'
         self.crawler: Optional[PlaywrightCrawler] = None
         self.results: List[LinkedInProfile] = []
         self.last_request_time = 0
@@ -98,10 +98,18 @@ class LinkedInScraper:
                     '--disable-web-security',
                     '--disable-features=VizDisplayCompositor',
                     '--disable-blink-features=AutomationControlled',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--disable-field-trial-config',
+                    '--disable-ipc-flooding-protection',
                     '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 ],
             },
-            request_handler_timeout=timedelta(seconds=60),
+            request_handler_timeout=timedelta(seconds=90),  # Increased timeout
+            browser_pool_options={
+                'use_fingerprints': False,  # Disable fingerprinting
+            }
         )
         
         @self.crawler.router.default_handler
@@ -173,6 +181,36 @@ class LinkedInScraper:
             await asyncio.sleep(delay)
         
         self.last_request_time = time.time()
+
+    async def _setup_human_like_page(self, page: Page) -> None:
+        """Setup page to appear more human-like and avoid detection."""
+        try:
+            # Remove webdriver property
+            await page.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+            """)
+            
+            # Override the plugins property to use a custom getter
+            await page.add_init_script("""
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                });
+            """)
+            
+            # Override the languages property to use a custom getter
+            await page.add_init_script("""
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en'],
+                });
+            """)
+            
+            # Set viewport to common resolution
+            await page.set_viewport_size({'width': 1366, 'height': 768})
+            
+        except Exception as e:
+            Actor.log.debug(f"Failed to setup human-like page: {str(e)}")
 
     def _safe_extract(self, page_content: str, selectors: List[str], field_name: str) -> Optional[str]:
         """Safely extract data with hierarchical fallback selectors."""
@@ -401,6 +439,9 @@ class LinkedInScraper:
             # Respect rate limiting
             await self._respect_rate_limit()
             
+            # Setup page to look more human-like
+            await self._setup_human_like_page(page)
+            
             # Set LinkedIn authentication cookie
             if self.linkedin_cookie:
                 Actor.log.info("Setting LinkedIn authentication cookie")
@@ -427,9 +468,31 @@ class LinkedInScraper:
                 'Sec-Fetch-Site': 'none',
             })
             
-            # Navigate directly with authentication cookie
+            # Navigate with multiple strategies to avoid detection
             Actor.log.info(f"Accessing LinkedIn profile with authentication: {url}")
-            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            
+            # Strategy 1: Try direct access
+            try:
+                await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            except Exception as e:
+                Actor.log.warning(f"Direct access failed: {str(e)}")
+                
+                # Strategy 2: Try going to LinkedIn homepage first, then navigate
+                try:
+                    Actor.log.info("Trying indirect access via LinkedIn homepage")
+                    await page.goto('https://www.linkedin.com', wait_until='domcontentloaded', timeout=15000)
+                    await asyncio.sleep(2)  # Wait a bit
+                    await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+                except Exception as e2:
+                    Actor.log.warning(f"Indirect access also failed: {str(e2)}")
+                    
+                    # Strategy 3: Try with different wait condition
+                    try:
+                        Actor.log.info("Trying with load state")
+                        await page.goto(url, wait_until='load', timeout=30000)
+                    except Exception as e3:
+                        Actor.log.error(f"All access methods failed: {str(e3)}")
+                        raise e3
             
             # Check for LinkedIn blocks/redirects
             current_url = page.url
