@@ -95,7 +95,8 @@ class LinkedInScraper:
                     '--disable-dev-shm-usage',
                     '--disable-web-security',
                     '--disable-features=VizDisplayCompositor',
-                    '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    '--disable-blink-features=AutomationControlled',
+                    '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 ],
             },
             request_handler_timeout=timedelta(seconds=60),
@@ -397,6 +398,18 @@ class LinkedInScraper:
         try:
             # Respect rate limiting
             await self._respect_rate_limit()
+            
+            # Set additional headers to avoid detection
+            await page.set_extra_http_headers({
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+            })
             
             # Navigate with improved error detection
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
