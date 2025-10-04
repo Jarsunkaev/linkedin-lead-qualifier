@@ -53,6 +53,8 @@ class LinkedInScraper:
                 '.pv-text-details__left-panel h1',
                 '.ph5.pb5 h1',
                 '.pv-top-card .pv-top-card__information h1',
+                '.mt2.relative h1',  # New layout
+                '.pv-top-card-profile-picture__container + div h1',  # Alternative layout
                 'h1'  # Generic fallback
             ],
             'headline': [
@@ -390,16 +392,24 @@ class LinkedInScraper:
         
         # Extract name using regex patterns
         name_patterns = [
+            r'<h1[^>]*data-anonymize="person-name"[^>]*>([^<]+)</h1>',  # Most reliable
+            r'<h1[^>]*class="[^"]*text-heading-xlarge[^"]*"[^>]*>([^<]+)</h1>',
             r'<h1[^>]*>([^<]+)</h1>',
             r'"name"\s*:\s*"([^"]+)"',
-            r'<title>([^|]+)\s*\|',
+            r'<title>([^|]+(?:\s+\|\s+LinkedIn)?)\s*\|',  # Handle LinkedIn in title
+            r'profileName["\']:\s*["\']([^"\']+)["\']',
+            r'data-anonymize=["\']person-name["\'][^>]*>([^<]+)<',
         ]
         
         for pattern in name_patterns:
             match = re.search(pattern, page_content, re.IGNORECASE)
             if match:
                 name = match.group(1).strip()
-                if len(name.split()) >= 2:  # Basic validation
+                # Filter out generic LinkedIn titles
+                if (len(name.split()) >= 2 and 
+                    name.lower() not in ['linkedin', 'join linkedin', 'linkedin login'] and
+                    not name.startswith('LinkedIn') and
+                    len(name) > 3):
                     data['name'] = name
                     break
         
@@ -497,6 +507,21 @@ class LinkedInScraper:
             
             Actor.log.info(f"Page loaded - URL: {current_url}")
             Actor.log.info(f"Page title: {page_title}")
+            
+            # If we only see "LinkedIn" title, wait longer for content to load
+            if page_title.strip() == "LinkedIn":
+                Actor.log.info("Generic LinkedIn title detected, waiting for profile content to load...")
+                await asyncio.sleep(5)
+                
+                # Try waiting for specific profile elements
+                try:
+                    await page.wait_for_selector('h1', timeout=10000)
+                    Actor.log.info("Profile heading found, content should be loaded")
+                except Exception as e:
+                    Actor.log.warning(f"Profile heading not found: {str(e)}")
+                
+                page_title = await page.title()
+                Actor.log.info(f"Updated page title after waiting: {page_title}")
             
             if any(block_indicator in current_url for block_indicator in [
                 'linkedin.com/authwall', 'linkedin.com/checkpoint', 
