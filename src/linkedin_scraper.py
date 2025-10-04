@@ -107,9 +107,6 @@ class LinkedInScraper:
                 ],
             },
             request_handler_timeout=timedelta(seconds=90),  # Increased timeout
-            browser_pool_options={
-                'use_fingerprints': False,  # Disable fingerprinting
-            }
         )
         
         @self.crawler.router.default_handler
